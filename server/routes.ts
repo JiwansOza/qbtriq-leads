@@ -148,9 +148,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Apply field mapping
         for (const [sourceField, targetField] of Object.entries(fieldMapping)) {
-          if (leadData[sourceField] !== undefined) {
+          if (targetField !== 'skip' && leadData[sourceField] !== undefined) {
             (mappedLead as any)[targetField] = leadData[sourceField];
           }
+        }
+        
+        // Assign imported leads to the current user if not already assigned
+        if (!(mappedLead as any).assignedTo) {
+          (mappedLead as any).assignedTo = userId;
         }
         
         const validatedLead = insertLeadSchema.parse(mappedLead);
