@@ -148,8 +148,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Apply field mapping
         for (const [sourceField, targetField] of Object.entries(fieldMapping)) {
-          if (targetField !== 'skip' && leadData[sourceField] !== undefined) {
-            (mappedLead as any)[targetField] = leadData[sourceField];
+          if (targetField !== 'skip' && targetField && leadData[sourceField] !== undefined) {
+            (mappedLead as any)[targetField as string] = leadData[sourceField];
           }
         }
         

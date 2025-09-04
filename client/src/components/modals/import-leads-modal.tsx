@@ -70,7 +70,8 @@ export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModa
 
   const mutation = useMutation({
     mutationFn: async (data: { leads: any[], fieldMapping: Record<string, string> }) => {
-      await apiRequest("POST", "/api/leads/import", data);
+      const response = await apiRequest("POST", "/api/leads/import", data);
+      return await response.json();
     },
     onSuccess: (response: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
