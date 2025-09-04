@@ -15,6 +15,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import logoUrl from "@assets/favicon_1757010764824.png";
 
 export default function Sidebar() {
   const [location] = useLocation();
@@ -76,9 +77,11 @@ export default function Sidebar() {
       {/* Header */}
       <div className="p-6 border-b border-border">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <BarChart3 className="text-primary-foreground text-sm" />
-          </div>
+          <img 
+            src={logoUrl} 
+            alt="QBtriq Logo" 
+            className="w-10 h-10 object-contain"
+          />
           <div>
             <h1 className="text-lg font-semibold text-foreground">Qbtriq CRM</h1>
             <p className="text-xs text-muted-foreground">Lead Management</p>
