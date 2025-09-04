@@ -19,7 +19,7 @@ export default function Leads() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [editingLead, setEditingLead] = useState<any>(null);
@@ -29,7 +29,7 @@ export default function Leads() {
     queryFn: async () => {
       const params = new URLSearchParams();
       if (searchQuery) params.append('search', searchQuery);
-      if (statusFilter) params.append('status', statusFilter);
+      if (statusFilter && statusFilter !== "all") params.append('status', statusFilter);
       
       const response = await fetch(`/api/leads?${params}`);
       if (!response.ok) {
@@ -142,7 +142,7 @@ export default function Leads() {
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Statuses</SelectItem>
+                  <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="NEW">New</SelectItem>
                   <SelectItem value="CONTACTED">Contacted</SelectItem>
                   <SelectItem value="FOLLOW_UP">Follow Up</SelectItem>

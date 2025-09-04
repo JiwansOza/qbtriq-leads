@@ -260,7 +260,7 @@ export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModa
                             <SelectValue placeholder="Skip field" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Skip field</SelectItem>
+                            <SelectItem value="skip">Skip field</SelectItem>
                             {targetFields.map((field) => (
                               <SelectItem key={field.value} value={field.value}>
                                 {field.label}

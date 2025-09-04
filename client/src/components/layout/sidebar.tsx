@@ -115,9 +115,9 @@ export default function Sidebar() {
           
           return (
             <Link key={item.href} href={item.href}>
-              <a
+              <div
                 className={cn(
-                  "flex items-center space-x-3 p-3 rounded-lg transition-colors w-full text-left",
+                  "flex items-center space-x-3 p-3 rounded-lg transition-colors w-full text-left cursor-pointer",
                   active
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -136,7 +136,7 @@ export default function Sidebar() {
                   </Badge>
                 )}
                 {active && <ChevronRight className="w-4 h-4" />}
-              </a>
+              </div>
             </Link>
           );
         })}
