@@ -20,10 +20,40 @@ interface ImportLeadsModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// CSV Parser function
+function parseCSV(csvText: string): { headers: string[], rows: any[] } {
+  const lines = csvText.trim().split('\n');
+  if (lines.length < 2) {
+    throw new Error('CSV must have at least a header row and one data row');
+  }
+
+  // Parse headers
+  const headers = lines[0].split(',').map(header => header.trim().replace(/^"|"$/g, ''));
+  
+  // Parse data rows
+  const rows: any[] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue; // Skip empty lines
+    
+    const values = line.split(',').map(value => value.trim().replace(/^"|"$/g, ''));
+    const row: any = {};
+    
+    headers.forEach((header, index) => {
+      row[header] = values[index] || '';
+    });
+    
+    rows.push(row);
+  }
+  
+  return { headers, rows };
+}
+
 export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModalProps) {
   const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [jsonData, setJsonData] = useState<any[] | null>(null);
+  const [csvData, setCsvData] = useState<any[] | null>(null);
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({});
   const [step, setStep] = useState<'upload' | 'mapping' | 'preview'>('upload');
 
@@ -75,10 +105,10 @@ export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModa
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.endsWith('.json')) {
+    if (!file.name.endsWith('.csv')) {
       toast({
         title: "Invalid File",
-        description: "Please select a JSON file",
+        description: "Please select a CSV file",
         variant: "destructive",
       });
       return;
@@ -89,19 +119,17 @@ export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModa
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const data = JSON.parse(e.target?.result as string);
-        if (!Array.isArray(data)) {
-          throw new Error("JSON must contain an array of objects");
-        }
+        const csvText = e.target?.result as string;
+        const data = parseCSV(csvText);
         
-        setJsonData(data);
+        setCsvData(data.rows);
+        setCsvHeaders(data.headers);
         
         // Auto-detect field mappings
-        if (data.length > 0) {
-          const sampleObject = data[0];
+        if (data.headers.length > 0) {
           const detectedMapping: Record<string, string> = {};
           
-          Object.keys(sampleObject).forEach(key => {
+          data.headers.forEach(key => {
             const lowerKey = key.toLowerCase();
             
             if (lowerKey.includes('name') || lowerKey === 'full_name' || lowerKey === 'fullname') {
@@ -129,8 +157,8 @@ export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModa
         setStep('mapping');
       } catch (error) {
         toast({
-          title: "Invalid JSON",
-          description: "Failed to parse JSON file. Please check the format.",
+          title: "Invalid CSV",
+          description: "Failed to parse CSV file. Please check the format.",
           variant: "destructive",
         });
       }
@@ -140,23 +168,24 @@ export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModa
   };
 
   const handleImport = () => {
-    if (!jsonData || !fieldMapping) return;
+    if (!csvData || !fieldMapping) return;
     
     mutation.mutate({
-      leads: jsonData,
+      leads: csvData,
       fieldMapping,
     });
   };
 
   const handleClose = () => {
     setSelectedFile(null);
-    setJsonData(null);
+    setCsvData(null);
+    setCsvHeaders([]);
     setFieldMapping({});
     setStep('upload');
     onOpenChange(false);
   };
 
-  const sourceFields = jsonData && jsonData.length > 0 ? Object.keys(jsonData[0]) : [];
+  const sourceFields = csvHeaders;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -164,7 +193,7 @@ export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModa
         <DialogHeader>
           <DialogTitle>Import Leads</DialogTitle>
           <DialogDescription>
-            Import leads from a JSON file with automatic field mapping
+            Import leads from a CSV file with automatic field mapping
           </DialogDescription>
         </DialogHeader>
 
@@ -172,12 +201,12 @@ export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModa
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Upload JSON File
+                Upload CSV File
               </label>
               <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
                 <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground mb-2">
-                  Drag and drop your JSON file here, or
+                  Drag and drop your CSV file here, or
                 </p>
                 <div className="space-y-2">
                   <Button variant="outline" onClick={() => document.getElementById('file-input')?.click()} data-testid="button-browse-files">
@@ -186,7 +215,7 @@ export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModa
                   <input
                     id="file-input"
                     type="file"
-                    accept=".json"
+                    accept=".csv"
                     onChange={handleFileSelect}
                     className="hidden"
                     data-testid="input-file-upload"
@@ -213,7 +242,7 @@ export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModa
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">
-                        {jsonData?.length || 0} records detected
+                        {csvData?.length || 0} records detected
                       </p>
                     </div>
                   </div>
@@ -223,7 +252,7 @@ export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModa
           </div>
         )}
 
-        {step === 'mapping' && jsonData && (
+        {step === 'mapping' && csvData && (
           <div className="space-y-6">
             <Card>
               <CardHeader>
@@ -234,7 +263,7 @@ export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModa
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Map the fields from your JSON file to the CRM fields. Auto-detected mappings are shown below.
+                  Map the fields from your CSV file to the CRM fields. Auto-detected mappings are shown below.
                 </p>
                 <div className="space-y-3">
                   {sourceFields.map((sourceField) => (
@@ -242,7 +271,7 @@ export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModa
                       <div className="flex-1">
                         <span className="font-mono text-sm">{sourceField}</span>
                         <p className="text-xs text-muted-foreground">
-                          Sample: {JSON.stringify(jsonData[0][sourceField]).slice(0, 50)}...
+                          Sample: {csvData[0]?.[sourceField] || 'N/A'}
                         </p>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -286,7 +315,7 @@ export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModa
           </div>
         )}
 
-        {step === 'preview' && jsonData && (
+        {step === 'preview' && csvData && (
           <div className="space-y-6">
             <Card>
               <CardHeader>
@@ -297,7 +326,7 @@ export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModa
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-muted-foreground">Total Records:</span>
-                      <span className="font-medium ml-2" data-testid="preview-total-records">{jsonData.length}</span>
+                      <span className="font-medium ml-2" data-testid="preview-total-records">{csvData.length}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Mapped Fields:</span>
@@ -310,7 +339,7 @@ export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModa
                   <div>
                     <h4 className="font-medium text-foreground mb-2">Sample Records:</h4>
                     <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {jsonData.slice(0, 3).map((record, index) => (
+                      {csvData.slice(0, 3).map((record, index) => (
                         <div key={index} className="p-3 bg-muted/50 rounded border text-xs">
                           {Object.entries(fieldMapping)
                             .filter(([_, target]) => target)
@@ -339,7 +368,7 @@ export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModa
                 disabled={mutation.isPending || Object.values(fieldMapping).filter(Boolean).length === 0}
                 data-testid="button-confirm-import"
               >
-                {mutation.isPending ? "Importing..." : `Import ${jsonData.length} Leads`}
+                {mutation.isPending ? "Importing..." : `Import ${csvData.length} Leads`}
               </Button>
             </div>
           </div>
