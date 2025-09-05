@@ -25,7 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { insertLeadSchema } from "@shared/schema";
+import { insertLeadSchema, type UserWithEmployee } from "@shared/schema";
 
 const formSchema = insertLeadSchema.extend({
   expectedCloseDate: z.string().optional(),
@@ -42,7 +42,7 @@ export default function EditLeadModal({ lead, open, onOpenChange }: EditLeadModa
   const { toast } = useToast();
 
   // Get employees for assignment
-  const { data: employees } = useQuery({
+  const { data: employees } = useQuery<UserWithEmployee[]>({
     queryKey: ["/api/employees"],
     enabled: open,
   });
@@ -172,6 +172,7 @@ export default function EditLeadModal({ lead, open, onOpenChange }: EditLeadModa
                         type="email" 
                         placeholder="john@example.com" 
                         {...field} 
+                        value={field.value || ""}
                         data-testid="input-edit-lead-email" 
                       />
                     </FormControl>
@@ -190,6 +191,7 @@ export default function EditLeadModal({ lead, open, onOpenChange }: EditLeadModa
                       <Input 
                         placeholder="+1 (555) 123-4567" 
                         {...field} 
+                        value={field.value || ""}
                         data-testid="input-edit-lead-phone" 
                       />
                     </FormControl>
@@ -210,6 +212,7 @@ export default function EditLeadModal({ lead, open, onOpenChange }: EditLeadModa
                       <Input 
                         placeholder="Acme Corp" 
                         {...field} 
+                        value={field.value || ""}
                         data-testid="input-edit-lead-company" 
                       />
                     </FormControl>
@@ -228,6 +231,7 @@ export default function EditLeadModal({ lead, open, onOpenChange }: EditLeadModa
                       <Input 
                         placeholder="CEO" 
                         {...field} 
+                        value={field.value || ""}
                         data-testid="input-edit-lead-position" 
                       />
                     </FormControl>
@@ -248,6 +252,7 @@ export default function EditLeadModal({ lead, open, onOpenChange }: EditLeadModa
                       <Input 
                         placeholder="Website, Referral, etc." 
                         {...field} 
+                        value={field.value || ""}
                         data-testid="input-edit-lead-source" 
                       />
                     </FormControl>
@@ -262,7 +267,7 @@ export default function EditLeadModal({ lead, open, onOpenChange }: EditLeadModa
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value || undefined}>
                       <FormControl>
                         <SelectTrigger data-testid="select-edit-lead-status">
                           <SelectValue placeholder="Select status" />
@@ -288,7 +293,7 @@ export default function EditLeadModal({ lead, open, onOpenChange }: EditLeadModa
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Assign To</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value || undefined}>
                     <FormControl>
                       <SelectTrigger data-testid="select-edit-lead-assignee">
                         <SelectValue placeholder="Select team member" />
@@ -296,7 +301,7 @@ export default function EditLeadModal({ lead, open, onOpenChange }: EditLeadModa
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="unassigned">Unassigned</SelectItem>
-                      {employees?.map((employee: any) => (
+                      {employees?.map((employee) => (
                         <SelectItem key={employee.id} value={employee.id}>
                           {employee.firstName} {employee.lastName}
                         </SelectItem>
@@ -320,6 +325,7 @@ export default function EditLeadModal({ lead, open, onOpenChange }: EditLeadModa
                         type="number" 
                         placeholder="5000" 
                         {...field} 
+                        value={field.value || ""}
                         data-testid="input-edit-lead-value" 
                       />
                     </FormControl>
@@ -374,8 +380,9 @@ export default function EditLeadModal({ lead, open, onOpenChange }: EditLeadModa
                   <FormControl>
                     <Textarea 
                       placeholder="Additional notes about this lead..." 
-                      {...field} 
-                      data-testid="textarea-edit-lead-notes" 
+                                              {...field} 
+                        value={field.value || ""}
+                        data-testid="textarea-edit-lead-notes" 
                     />
                   </FormControl>
                   <FormMessage />

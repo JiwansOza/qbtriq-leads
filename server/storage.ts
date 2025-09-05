@@ -25,6 +25,9 @@ import { eq, desc, and, gte, lte, ilike, or } from "drizzle-orm";
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: UpsertUser): Promise<User>;
+  updateUser(id: string, updates: Partial<UpsertUser>): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
   getUserWithEmployee(id: string): Promise<UserWithEmployee | undefined>;
   
@@ -76,6 +79,28 @@ export class DatabaseStorage implements IStorage {
   // User operations
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(userData).returning();
+    return user;
+  }
+
+  async updateUser(id: string, updates: Partial<UpsertUser>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ 
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning();
     return user;
   }
 
@@ -209,7 +234,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getLeadsByStatus(status: string, userId?: string): Promise<LeadWithAssignee[]> {
-    let whereCondition = eq(leads.status, status);
+    let whereCondition = eq(leads.status, status as any);
     
     if (userId) {
       whereCondition = and(whereCondition, eq(leads.assignedTo, userId)) as any;

@@ -1,19 +1,21 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Filter, Upload, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Filter, Upload, Edit, Trash2, Eye } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useAuthenticatedQuery, useAuthenticatedMutation } from "@/hooks/useAuthenticatedQuery";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import AddLeadModal from "@/components/modals/add-lead-modal";
 import EditLeadModal from "@/components/modals/edit-lead-modal";
 import ImportLeadsModal from "@/components/modals/import-leads-modal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function Leads() {
   const { user } = useAuth();
@@ -23,53 +25,49 @@ export default function Leads() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [editingLead, setEditingLead] = useState<any>(null);
+  const [viewingLead, setViewingLead] = useState<any>(null);
 
-  const { data: leads, isLoading } = useQuery({
-    queryKey: ["/api/leads", searchQuery, statusFilter],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (searchQuery) params.append('search', searchQuery);
-      if (statusFilter && statusFilter !== "all") params.append('status', statusFilter);
-      
-      const response = await fetch(`/api/leads?${params}`);
-      if (!response.ok) {
-        throw new Error(`${response.status}: ${response.statusText}`);
-      }
-      return response.json();
-    },
-  });
+  const { data: leads, isLoading } = useAuthenticatedQuery(
+    ["/api/leads", searchQuery, statusFilter],
+    `/api/leads?${new URLSearchParams({
+      ...(searchQuery && { search: searchQuery }),
+      ...(statusFilter && statusFilter !== "all" && { status: statusFilter }),
+    })}`
+  );
 
-  const deleteMutation = useMutation({
-    mutationFn: async (leadId: string) => {
-      await apiRequest("DELETE", `/api/leads/${leadId}`);
+  const deleteMutation = useAuthenticatedMutation(
+    async (leadId: string, token: string) => {
+      await apiRequest("DELETE", `/api/leads/${leadId}`, undefined, token);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats/leads"] });
-      toast({
-        title: "Success",
-        description: "Lead deleted successfully",
-      });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/stats/leads"] });
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: "Success",
+          description: "Lead deleted successfully",
+        });
+      },
+      onError: (error) => {
+        if (isUnauthorizedError(error)) {
+          toast({
+            title: "Unauthorized",
+            description: "You are logged out. Logging in again...",
+            variant: "destructive",
+          });
+          setTimeout(() => {
+            window.location.href = "/api/login";
+          }, 500);
+          return;
+        }
+        toast({
+          title: "Error",
+          description: "Failed to delete lead",
           variant: "destructive",
         });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to delete lead",
-        variant: "destructive",
-      });
-    },
-  });
+      },
+    }
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -87,6 +85,9 @@ export default function Leads() {
       deleteMutation.mutate(leadId);
     }
   };
+
+  // Ensure leads is always an array
+  const leadsArray = Array.isArray(leads) ? leads : [];
 
   return (
     <div className="space-y-6" data-testid="leads-page">
@@ -158,7 +159,7 @@ export default function Leads() {
       {/* Leads Table */}
       <Card>
         <CardHeader>
-          <CardTitle>All Leads ({leads?.length || 0})</CardTitle>
+          <CardTitle>All Leads ({leadsArray.length})</CardTitle>
           <CardDescription>
             {user?.role === 'admin' 
               ? "Manage all leads in the system" 
@@ -171,7 +172,7 @@ export default function Leads() {
             <div className="text-center py-8" data-testid="loading-leads">
               Loading leads...
             </div>
-          ) : leads && leads.length > 0 ? (
+          ) : leadsArray.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -186,7 +187,7 @@ export default function Leads() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {leads.map((lead: any) => (
+                {leadsArray.map((lead: any) => (
                   <TableRow key={lead.id} data-testid={`lead-row-${lead.id}`}>
                     <TableCell className="font-medium" data-testid={`lead-name-${lead.id}`}>
                       {lead.name}
@@ -216,6 +217,14 @@ export default function Leads() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => setViewingLead(lead)}
+                          data-testid={`button-view-${lead.id}`}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
                         <Button 
                           variant="ghost" 
                           size="icon"
@@ -263,6 +272,31 @@ export default function Leads() {
         open={showImportModal} 
         onOpenChange={setShowImportModal} 
       />
+      <Dialog open={!!viewingLead} onOpenChange={(open) => !open && setViewingLead(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Lead Details</DialogTitle>
+          </DialogHeader>
+          {viewingLead && (
+            <Card>
+              <CardHeader>
+                <CardTitle>{viewingLead.name}</CardTitle>
+                <CardDescription>{viewingLead.company || "-"}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div><strong>Email:</strong> {viewingLead.email || "-"}</div>
+                  <div><strong>Phone:</strong> {viewingLead.phone || "-"}</div>
+                  <div><strong>Status:</strong> <Badge className={getStatusColor(viewingLead.status)}>{viewingLead.status}</Badge></div>
+                  <div><strong>Assigned To:</strong> {viewingLead.assignedUser ? `${viewingLead.assignedUser.firstName} ${viewingLead.assignedUser.lastName}` : "Unassigned"}</div>
+                  <div><strong>Created:</strong> {new Date(viewingLead.createdAt).toLocaleDateString()}</div>
+                  {/* Add more fields if needed */}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

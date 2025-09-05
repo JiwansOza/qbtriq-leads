@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Upload, FileText, MapPin } from "lucide-react";
@@ -51,6 +52,7 @@ function parseCSV(csvText: string): { headers: string[], rows: any[] } {
 
 export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModalProps) {
   const { toast } = useToast();
+  const { getAuthToken } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [csvData, setCsvData] = useState<any[] | null>(null);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -70,7 +72,8 @@ export default function ImportLeadsModal({ open, onOpenChange }: ImportLeadsModa
 
   const mutation = useMutation({
     mutationFn: async (data: { leads: any[], fieldMapping: Record<string, string> }) => {
-      const response = await apiRequest("POST", "/api/leads/import", data);
+      const token = await getAuthToken();
+      const response = await apiRequest("POST", "/api/leads/import", data, token);
       return await response.json();
     },
     onSuccess: (response: any) => {

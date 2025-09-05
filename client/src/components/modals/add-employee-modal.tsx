@@ -17,6 +17,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,7 +27,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { insertEmployeeSchema } from "@shared/schema";
+import { insertEmployeeSchema, type UserWithEmployee } from "@shared/schema";
 import { Upload, X } from "lucide-react";
 
 const formSchema = insertEmployeeSchema.extend({
@@ -44,7 +45,7 @@ export default function AddEmployeeModal({ open, onOpenChange }: AddEmployeeModa
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
   // Get all users to select from
-  const { data: allUsers } = useQuery({
+  const { data: allUsers } = useQuery<UserWithEmployee[]>({
     queryKey: ["/api/employees"],
     enabled: open,
   });
@@ -119,7 +120,7 @@ export default function AddEmployeeModal({ open, onOpenChange }: AddEmployeeModa
   };
 
   // Filter out users who already have employee records
-  const availableUsers = allUsers?.filter((user: any) => !user.employee) || [];
+  const availableUsers = allUsers?.filter((user) => !user.employee) || [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -139,7 +140,7 @@ export default function AddEmployeeModal({ open, onOpenChange }: AddEmployeeModa
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Select User *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value || undefined}>
                     <FormControl>
                       <SelectTrigger data-testid="select-employee-user">
                         <SelectValue placeholder="Select a user" />
@@ -169,6 +170,7 @@ export default function AddEmployeeModal({ open, onOpenChange }: AddEmployeeModa
                       <Input 
                         placeholder="EMP001" 
                         {...field} 
+                        value={field.value || ""}
                         data-testid="input-employee-id" 
                       />
                     </FormControl>
@@ -187,6 +189,7 @@ export default function AddEmployeeModal({ open, onOpenChange }: AddEmployeeModa
                       <Input 
                         placeholder="Sales, Marketing, etc." 
                         {...field} 
+                        value={field.value || ""}
                         data-testid="input-employee-department" 
                       />
                     </FormControl>
@@ -206,6 +209,7 @@ export default function AddEmployeeModal({ open, onOpenChange }: AddEmployeeModa
                     <Input 
                       placeholder="Sales Representative" 
                       {...field} 
+                      value={field.value || ""}
                       data-testid="input-employee-position" 
                     />
                   </FormControl>
@@ -224,6 +228,7 @@ export default function AddEmployeeModal({ open, onOpenChange }: AddEmployeeModa
                     <Input 
                       placeholder="+1 (555) 123-4567" 
                       {...field} 
+                      value={field.value || ""}
                       data-testid="input-employee-phone" 
                     />
                   </FormControl>
@@ -242,6 +247,7 @@ export default function AddEmployeeModal({ open, onOpenChange }: AddEmployeeModa
                     <Textarea 
                       placeholder="123 Main St, City, State, ZIP" 
                       {...field} 
+                      value={field.value || ""}
                       data-testid="textarea-employee-address" 
                     />
                   </FormControl>
@@ -302,7 +308,7 @@ export default function AddEmployeeModal({ open, onOpenChange }: AddEmployeeModa
                   </div>
                   <FormControl>
                     <Switch
-                      checked={field.value}
+                      checked={field.value || false}
                       onCheckedChange={field.onChange}
                       data-testid="switch-employee-active"
                     />

@@ -1,4 +1,5 @@
 
+
 -- Enable UUID generation
 CREATE EXTENSION IF NOT EXISTS "gen_random_uuid";
 

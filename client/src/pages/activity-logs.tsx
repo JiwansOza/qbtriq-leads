@@ -1,13 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
+import { useAuthenticatedQuery } from "@/hooks/useAuthenticatedQuery";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Clock, User, UserPlus, Edit, Trash2, Upload, LogIn, LogOut } from "lucide-react";
+import type { ActivityLogWithUser } from "@shared/schema";
 
 export default function ActivityLogs() {
-  const { data: activities, isLoading } = useQuery({
-    queryKey: ["/api/activity-logs"],
-  });
+  const { data: activities, isLoading } = useAuthenticatedQuery<ActivityLogWithUser[]>(
+    ["/api/activity-logs"],
+    "/api/activity-logs"
+  );
 
   const getActivityIcon = (action: string) => {
     switch (action) {

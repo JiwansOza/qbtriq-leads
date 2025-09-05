@@ -25,7 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { insertLeadSchema } from "@shared/schema";
+import { insertLeadSchema, type UserWithEmployee } from "@shared/schema";
 
 const formSchema = insertLeadSchema.extend({
   expectedCloseDate: z.string().optional(),
@@ -40,7 +40,7 @@ export default function AddLeadModal({ open, onOpenChange }: AddLeadModalProps) 
   const { toast } = useToast();
 
   // Get employees for assignment
-  const { data: employees } = useQuery({
+  const { data: employees } = useQuery<UserWithEmployee[]>({
     queryKey: ["/api/employees"],
     enabled: open,
   });
@@ -143,6 +143,7 @@ export default function AddLeadModal({ open, onOpenChange }: AddLeadModalProps) 
                         type="email" 
                         placeholder="john@example.com" 
                         {...field} 
+                        value={field.value || ""}
                         data-testid="input-lead-email" 
                       />
                     </FormControl>
@@ -161,6 +162,7 @@ export default function AddLeadModal({ open, onOpenChange }: AddLeadModalProps) 
                       <Input 
                         placeholder="+1 (555) 123-4567" 
                         {...field} 
+                        value={field.value || ""}
                         data-testid="input-lead-phone" 
                       />
                     </FormControl>
@@ -181,6 +183,7 @@ export default function AddLeadModal({ open, onOpenChange }: AddLeadModalProps) 
                       <Input 
                         placeholder="Acme Corp" 
                         {...field} 
+                        value={field.value || ""}
                         data-testid="input-lead-company" 
                       />
                     </FormControl>
@@ -199,6 +202,7 @@ export default function AddLeadModal({ open, onOpenChange }: AddLeadModalProps) 
                       <Input 
                         placeholder="CEO" 
                         {...field} 
+                        value={field.value || ""}
                         data-testid="input-lead-position" 
                       />
                     </FormControl>
@@ -219,6 +223,7 @@ export default function AddLeadModal({ open, onOpenChange }: AddLeadModalProps) 
                       <Input 
                         placeholder="Website, Referral, etc." 
                         {...field} 
+                        value={field.value || ""}
                         data-testid="input-lead-source" 
                       />
                     </FormControl>
@@ -233,7 +238,7 @@ export default function AddLeadModal({ open, onOpenChange }: AddLeadModalProps) 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                       <FormControl>
                         <SelectTrigger data-testid="select-lead-status">
                           <SelectValue placeholder="Select status" />
@@ -259,7 +264,7 @@ export default function AddLeadModal({ open, onOpenChange }: AddLeadModalProps) 
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Assign To</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value || undefined}>
                     <FormControl>
                       <SelectTrigger data-testid="select-lead-assignee">
                         <SelectValue placeholder="Select team member" />
@@ -267,7 +272,7 @@ export default function AddLeadModal({ open, onOpenChange }: AddLeadModalProps) 
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="unassigned">Unassigned</SelectItem>
-                      {employees?.map((employee: any) => (
+                      {employees?.map((employee) => (
                         <SelectItem key={employee.id} value={employee.id}>
                           {employee.firstName} {employee.lastName}
                         </SelectItem>
@@ -291,6 +296,7 @@ export default function AddLeadModal({ open, onOpenChange }: AddLeadModalProps) 
                         type="number" 
                         placeholder="5000" 
                         {...field} 
+                        value={field.value || ""}
                         data-testid="input-lead-value" 
                       />
                     </FormControl>
@@ -327,8 +333,9 @@ export default function AddLeadModal({ open, onOpenChange }: AddLeadModalProps) 
                   <FormControl>
                     <Textarea 
                       placeholder="Additional notes about this lead..." 
-                      {...field} 
-                      data-testid="textarea-lead-notes" 
+                                              {...field} 
+                        value={field.value || ""}
+                        data-testid="textarea-lead-notes" 
                     />
                   </FormControl>
                   <FormMessage />

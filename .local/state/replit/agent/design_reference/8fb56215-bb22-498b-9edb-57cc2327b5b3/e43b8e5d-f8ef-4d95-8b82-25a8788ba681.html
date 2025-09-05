@@ -1,0 +1,561 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qbtriq Lead Management CRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                },
+                fontFamily: {
+                    sans: ["Inter", "system-ui", "sans-serif"],
+                }
+            },
+        }
+    };
+    </script>
+    <style>
+        :root {
+            --background: hsl(210 40% 98%);
+            --foreground: hsl(222.2 84% 4.9%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(222.2 84% 4.9%);
+            --popover: hsl(0 0% 100%);
+            --popover-foreground: hsl(222.2 84% 4.9%);
+            --primary: hsl(221.2 83.2% 53.3%);
+            --primary-foreground: hsl(210 40% 98%);
+            --secondary: hsl(151 55% 41.5%);
+            --secondary-foreground: hsl(210 40% 98%);
+            --muted: hsl(210 40% 96%);
+            --muted-foreground: hsl(215.4 16.3% 46.9%);
+            --accent: hsl(42.1 84.4% 55.3%);
+            --accent-foreground: hsl(222.2 84% 4.9%);
+            --destructive: hsl(0 84.2% 60.2%);
+            --destructive-foreground: hsl(210 40% 98%);
+            --border: hsl(214.3 31.8% 91.4%);
+            --input: hsl(214.3 31.8% 91.4%);
+            --ring: hsl(221.2 83.2% 53.3%);
+            --radius: 8px;
+        }
+        
+        .sidebar-item:hover {
+            background-color: hsl(221.2 83.2% 53.3% / 0.1);
+        }
+        
+        .status-badge {
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+        }
+        
+        .online-indicator {
+            width: 8px;
+            height: 8px;
+            background-color: hsl(151 55% 41.5%);
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .offline-indicator {
+            width: 8px;
+            height: 8px;
+            background-color: hsl(0 0% 60%);
+            border-radius: 50%;
+            display: inline-block;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-background text-foreground font-sans">
+    <!-- @COMPONENT: MainLayout -->
+    <div class="flex h-screen bg-background">
+        <!-- @COMPONENT: Sidebar -->
+        <div class="w-64 bg-card shadow-lg border-r border-border">
+            <!-- @COMPONENT: SidebarHeader -->
+            <div class="p-4 border-b border-border">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chart-line text-primary-foreground text-sm"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-semibold text-foreground">Qbtriq CRM</h1>
+                        <p class="text-xs text-muted-foreground">Lead Management</p>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: SidebarHeader -->
+
+            <!-- @COMPONENT: UserProfile -->
+            <div class="p-4 border-b border-border">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
+                        <span class="text-secondary-foreground font-medium text-sm" data-bind="user.initials">JD</span>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-foreground" data-bind="user.name">John Doe</p>
+                        <p class="text-xs text-muted-foreground" data-bind="user.role">Admin</p>
+                    </div>
+                    <div class="online-indicator" data-bind="user.status"></div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: UserProfile -->
+
+            <!-- @COMPONENT: Navigation -->
+            <nav class="p-4 space-y-2">
+                <a href="#" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg bg-primary text-primary-foreground" data-event="click:navigateToDashboard">
+                    <i class="fas fa-home text-sm"></i>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+                <a href="#" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-muted-foreground hover:text-foreground transition-colors" data-event="click:navigateToLeads">
+                    <i class="fas fa-users text-sm"></i>
+                    <span class="font-medium">Leads</span>
+                    <span class="ml-auto bg-accent text-accent-foreground text-xs px-2 py-1 rounded-full" data-bind="leads.count">247</span>
+                </a>
+                <a href="#" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-muted-foreground hover:text-foreground transition-colors" data-event="click:navigateToTeam">
+                    <i class="fas fa-user-friends text-sm"></i>
+                    <span class="font-medium">Team</span>
+                </a>
+                <a href="#" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-muted-foreground hover:text-foreground transition-colors" data-event="click:navigateToAttendance">
+                    <i class="fas fa-clock text-sm"></i>
+                    <span class="font-medium">Attendance</span>
+                </a>
+                <a href="#" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-muted-foreground hover:text-foreground transition-colors" data-event="click:navigateToActivities">
+                    <i class="fas fa-list-alt text-sm"></i>
+                    <span class="font-medium">Activity Logs</span>
+                </a>
+                <a href="#" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-muted-foreground hover:text-foreground transition-colors" data-event="click:navigateToReports">
+                    <i class="fas fa-chart-bar text-sm"></i>
+                    <span class="font-medium">Reports</span>
+                </a>
+            </nav>
+            <!-- @END_COMPONENT: Navigation -->
+
+            <!-- @COMPONENT: SidebarFooter -->
+            <div class="absolute bottom-4 left-4 right-4">
+                <button class="w-full flex items-center justify-center space-x-2 p-3 text-muted-foreground hover:text-foreground transition-colors" data-event="click:logout">
+                    <i class="fas fa-sign-out-alt text-sm"></i>
+                    <span class="font-medium">Logout</span>
+                </button>
+            </div>
+            <!-- @END_COMPONENT: SidebarFooter -->
+        </div>
+        <!-- @END_COMPONENT: Sidebar -->
+
+        <!-- @COMPONENT: MainContent -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- @COMPONENT: TopBar -->
+            <header class="bg-card shadow-sm border-b border-border p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-semibold text-foreground">Dashboard</h2>
+                        <p class="text-muted-foreground">Welcome back, John! Here's what's happening today.</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <!-- @COMPONENT: ImportButton -->
+                        <button class="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-opacity font-medium flex items-center space-x-2" data-event="click:openImportModal">
+                            <i class="fas fa-upload text-sm"></i>
+                            <span>Import Leads</span>
+                        </button>
+                        <!-- @END_COMPONENT: ImportButton -->
+                        
+                        <!-- @COMPONENT: AddLeadButton -->
+                        <button class="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-opacity font-medium flex items-center space-x-2" data-event="click:openAddLeadModal">
+                            <i class="fas fa-plus text-sm"></i>
+                            <span>Add Lead</span>
+                        </button>
+                        <!-- @END_COMPONENT: AddLeadButton -->
+                        
+                        <!-- @COMPONENT: NotificationIcon -->
+                        <button class="relative p-2 text-muted-foreground hover:text-foreground transition-colors" data-event="click:openNotifications">
+                            <i class="fas fa-bell text-lg"></i>
+                            <span class="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center" data-bind="notifications.unread">3</span>
+                        </button>
+                        <!-- @END_COMPONENT: NotificationIcon -->
+                    </div>
+                </div>
+            </header>
+            <!-- @END_COMPONENT: TopBar -->
+
+            <!-- @COMPONENT: DashboardContent -->
+            <main class="flex-1 overflow-y-auto p-6 space-y-6">
+                <!-- @COMPONENT: StatsGrid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- @COMPONENT: StatCard -->
+                    <div class="bg-card p-6 rounded-lg shadow-sm border border-border">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-muted-foreground text-sm font-medium">Total Leads</p>
+                                <p class="text-3xl font-bold text-foreground" data-bind="stats.totalLeads">247</p>
+                                <p class="text-secondary text-sm font-medium">+12% from last month</p>
+                            </div>
+                            <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-users text-primary text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: StatCard -->
+
+                    <!-- @COMPONENT: StatCard -->
+                    <div class="bg-card p-6 rounded-lg shadow-sm border border-border">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-muted-foreground text-sm font-medium">Converted</p>
+                                <p class="text-3xl font-bold text-foreground" data-bind="stats.converted">89</p>
+                                <p class="text-secondary text-sm font-medium">+8% conversion rate</p>
+                            </div>
+                            <div class="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-chart-line text-secondary text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: StatCard -->
+
+                    <!-- @COMPONENT: StatCard -->
+                    <div class="bg-card p-6 rounded-lg shadow-sm border border-border">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-muted-foreground text-sm font-medium">Team Members</p>
+                                <p class="text-3xl font-bold text-foreground" data-bind="stats.teamMembers">12</p>
+                                <p class="text-secondary text-sm font-medium">8 online now</p>
+                            </div>
+                            <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-user-friends text-accent text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: StatCard -->
+
+                    <!-- @COMPONENT: StatCard -->
+                    <div class="bg-card p-6 rounded-lg shadow-sm border border-border">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-muted-foreground text-sm font-medium">Attendance Rate</p>
+                                <p class="text-3xl font-bold text-foreground" data-bind="stats.attendanceRate">94%</p>
+                                <p class="text-secondary text-sm font-medium">This week</p>
+                            </div>
+                            <div class="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-clock text-secondary text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: StatCard -->
+                </div>
+                <!-- @END_COMPONENT: StatsGrid -->
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- @COMPONENT: RecentLeads -->
+                    <div class="bg-card rounded-lg shadow-sm border border-border">
+                        <div class="p-6 border-b border-border">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-foreground">Recent Leads</h3>
+                                <button class="text-primary hover:text-primary/80 text-sm font-medium" data-event="click:viewAllLeads">View All</button>
+                            </div>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <!-- @MAP: recentLeads.map(lead => ( -->
+                            <div class="flex items-center justify-between p-4 bg-muted/50 rounded-lg" data-mock="true">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
+                                        <span class="text-secondary-foreground font-medium text-sm">SA</span>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-foreground" data-bind="lead.name">Sarah Anderson</p>
+                                        <p class="text-sm text-muted-foreground" data-bind="lead.company">TechCorp Inc.</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="status-badge bg-accent text-accent-foreground" data-bind="lead.status">NEW</span>
+                                    <p class="text-xs text-muted-foreground mt-1" data-bind="lead.date">2 hours ago</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 bg-muted/50 rounded-lg" data-mock="true">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                                        <span class="text-primary-foreground font-medium text-sm">MJ</span>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-foreground" data-bind="lead.name">Mike Johnson</p>
+                                        <p class="text-sm text-muted-foreground" data-bind="lead.company">StartupXYZ</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="status-badge bg-primary text-primary-foreground" data-bind="lead.status">CONTACTED</span>
+                                    <p class="text-xs text-muted-foreground mt-1" data-bind="lead.date">4 hours ago</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 bg-muted/50 rounded-lg" data-mock="true">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-accent rounded-full flex items-center justify-center">
+                                        <span class="text-accent-foreground font-medium text-sm">EB</span>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-foreground" data-bind="lead.name">Emily Brown</p>
+                                        <p class="text-sm text-muted-foreground" data-bind="lead.company">GlobalSoft</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="status-badge bg-secondary text-secondary-foreground" data-bind="lead.status">FOLLOW_UP</span>
+                                    <p class="text-xs text-muted-foreground mt-1" data-bind="lead.date">1 day ago</p>
+                                </div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: RecentLeads -->
+
+                    <!-- @COMPONENT: TeamActivity -->
+                    <div class="bg-card rounded-lg shadow-sm border border-border">
+                        <div class="p-6 border-b border-border">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-foreground">Team Activity</h3>
+                                <button class="text-primary hover:text-primary/80 text-sm font-medium" data-event="click:viewAllActivity">View All</button>
+                            </div>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <!-- @MAP: teamActivity.map(activity => ( -->
+                            <div class="flex items-start space-x-3" data-mock="true">
+                                <div class="w-8 h-8 bg-secondary rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-user-plus text-secondary-foreground text-xs"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-foreground">
+                                        <span class="font-medium" data-bind="activity.user">John Doe</span> added a new lead 
+                                        <span class="font-medium" data-bind="activity.leadName">Sarah Anderson</span>
+                                    </p>
+                                    <p class="text-xs text-muted-foreground" data-bind="activity.time">2 hours ago</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start space-x-3" data-mock="true">
+                                <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-phone text-primary-foreground text-xs"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-foreground">
+                                        <span class="font-medium" data-bind="activity.user">Alice Smith</span> contacted lead 
+                                        <span class="font-medium" data-bind="activity.leadName">Mike Johnson</span>
+                                    </p>
+                                    <p class="text-xs text-muted-foreground" data-bind="activity.time">3 hours ago</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start space-x-3" data-mock="true">
+                                <div class="w-8 h-8 bg-accent rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-clock text-accent-foreground text-xs"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-foreground">
+                                        <span class="font-medium" data-bind="activity.user">Bob Wilson</span> punched in at office
+                                    </p>
+                                    <p class="text-xs text-muted-foreground" data-bind="activity.time">4 hours ago</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start space-x-3" data-mock="true">
+                                <div class="w-8 h-8 bg-destructive rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-times text-destructive-foreground text-xs"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-foreground">
+                                        <span class="font-medium" data-bind="activity.user">Lisa Taylor</span> marked lead 
+                                        <span class="font-medium" data-bind="activity.leadName">David Chen</span> as not interested
+                                    </p>
+                                    <p class="text-xs text-muted-foreground" data-bind="activity.time">6 hours ago</p>
+                                </div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: TeamActivity -->
+                </div>
+
+                <!-- @COMPONENT: LeadStatusChart -->
+                <div class="bg-card rounded-lg shadow-sm border border-border">
+                    <div class="p-6 border-b border-border">
+                        <h3 class="text-lg font-semibold text-foreground">Lead Status Distribution</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-accent/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <span class="text-2xl font-bold text-accent" data-bind="statusCounts.new">67</span>
+                                </div>
+                                <p class="text-sm font-medium text-foreground">NEW</p>
+                                <p class="text-xs text-muted-foreground">27%</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <span class="text-2xl font-bold text-primary" data-bind="statusCounts.contacted">89</span>
+                                </div>
+                                <p class="text-sm font-medium text-foreground">CONTACTED</p>
+                                <p class="text-xs text-muted-foreground">36%</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-secondary/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <span class="text-2xl font-bold text-secondary" data-bind="statusCounts.followUp">45</span>
+                                </div>
+                                <p class="text-sm font-medium text-foreground">FOLLOW UP</p>
+                                <p class="text-xs text-muted-foreground">18%</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-destructive/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <span class="text-2xl font-bold text-destructive" data-bind="statusCounts.notInterested">32</span>
+                                </div>
+                                <p class="text-sm font-medium text-foreground">NOT INTERESTED</p>
+                                <p class="text-xs text-muted-foreground">13%</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-secondary/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <span class="text-2xl font-bold text-secondary" data-bind="statusCounts.converted">14</span>
+                                </div>
+                                <p class="text-sm font-medium text-foreground">CONVERTED</p>
+                                <p class="text-xs text-muted-foreground">6%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: LeadStatusChart -->
+            </main>
+            <!-- @END_COMPONENT: DashboardContent -->
+        </div>
+        <!-- @END_COMPONENT: MainContent -->
+    </div>
+    <!-- @END_COMPONENT: MainLayout -->
+
+    <!-- @COMPONENT: ImportModal -->
+    <div id="importModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden" data-modal="import">
+        <div class="bg-card rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="p-6 border-b border-border">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-foreground">Import Leads</h3>
+                    <button class="text-muted-foreground hover:text-foreground" data-event="click:closeImportModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-foreground mb-2">Upload JSON File</label>
+                    <div class="border-2 border-dashed border-border rounded-lg p-8 text-center">
+                        <i class="fas fa-cloud-upload-alt text-3xl text-muted-foreground mb-4"></i>
+                        <p class="text-muted-foreground mb-2">Drag and drop your JSON file here, or</p>
+                        <button class="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium" data-event="click:selectFile">
+                            Browse Files
+                        </button>
+                        <input type="file" accept=".json" class="hidden" data-implementation="File upload handler needed">
+                    </div>
+                </div>
+                <div class="bg-muted/50 rounded-lg p-4">
+                    <h4 class="font-medium text-foreground mb-2">Field Mapping Preview</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-muted-foreground">name</span>
+                            <span class="text-foreground">→ Lead Name</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted-foreground">email</span>
+                            <span class="text-foreground">→ Email Address</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted-foreground">company</span>
+                            <span class="text-foreground">→ Company</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-border flex justify-end space-x-3">
+                <button class="px-4 py-2 text-muted-foreground hover:text-foreground font-medium" data-event="click:closeImportModal">
+                    Cancel
+                </button>
+                <button class="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-medium" data-event="click:importLeads">
+                    Import Leads
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: ImportModal -->
+
+    <script>
+        // TODO: Implement authentication, role management, and state management
+        // TODO: Implement real-time updates for team status and activity
+        // TODO: Implement geolocation tracking for attendance
+        // TODO: Add comprehensive filtering and search functionality
+        // TODO: Implement export functionality for reports
+        
+        (function() {
+            // Demo functionality for modal interactions
+            const importBtn = document.querySelector('[data-event="click:openImportModal"]');
+            const importModal = document.getElementById('importModal');
+            const closeModalBtns = document.querySelectorAll('[data-event="click:closeImportModal"]');
+            
+            if (importBtn && importModal) {
+                importBtn.addEventListener('click', () => {
+                    importModal.classList.remove('hidden');
+                });
+            }
+            
+            closeModalBtns.forEach(btn => {
+                if (btn) {
+                    btn.addEventListener('click', () => {
+                        importModal.classList.add('hidden');
+                    });
+                }
+            });
+            
+            // Close modal on backdrop click
+            if (importModal) {
+                importModal.addEventListener('click', (e) => {
+                    if (e.target === importModal) {
+                        importModal.classList.add('hidden');
+                    }
+                });
+            }
+        })();
+    </script>
+</body>
+</html>

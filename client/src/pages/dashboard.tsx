@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useAuthenticatedQuery } from "@/hooks/useAuthenticatedQuery";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,27 +7,32 @@ import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import AddLeadModal from "@/components/modals/add-lead-modal";
 import ImportLeadsModal from "@/components/modals/import-leads-modal";
+import type { Lead, ActivityLog } from "@shared/schema";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [showAddLeadModal, setShowAddLeadModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
 
-  const { data: leadStats } = useQuery({
-    queryKey: ["/api/stats/leads"],
-  });
+  const { data: leadStats } = useAuthenticatedQuery<{ total: number; converted: number; [key: string]: number }>(
+    ["/api/stats/leads"],
+    "/api/stats/leads"
+  );
 
-  const { data: attendanceStats } = useQuery({
-    queryKey: ["/api/stats/attendance"],
-  });
+  const { data: attendanceStats } = useAuthenticatedQuery<{ totalEmployees: number; presentToday: number; attendanceRate: number }>(
+    ["/api/stats/attendance"],
+    "/api/stats/attendance"
+  );
 
-  const { data: recentLeads } = useQuery({
-    queryKey: ["/api/leads"],
-  });
+  const { data: recentLeads } = useAuthenticatedQuery<Lead[]>(
+    ["/api/leads"],
+    "/api/leads"
+  );
 
-  const { data: recentActivities } = useQuery({
-    queryKey: ["/api/activity-logs"],
-  });
+  const { data: recentActivities } = useAuthenticatedQuery<ActivityLog[]>(
+    ["/api/activity-logs"],
+    "/api/activity-logs"
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -106,7 +111,7 @@ export default function Dashboard() {
               {leadStats?.converted || 0}
             </div>
             <p className="text-xs text-muted-foreground">
-              {leadStats?.total > 0 ? Math.round((leadStats.converted / leadStats.total) * 100) : 0}% conversion rate
+              {leadStats?.total && leadStats?.total > 0 ? Math.round((leadStats.converted / leadStats.total) * 100) : 0}% conversion rate
             </p>
           </CardContent>
         </Card>
@@ -254,7 +259,7 @@ export default function Dashboard() {
                 </div>
                 <p className="text-sm font-medium text-foreground">{label}</p>
                 <p className="text-xs text-muted-foreground">
-                  {leadStats?.total > 0 ? Math.round(((leadStats as any)?.[key] / leadStats.total) * 100) : 0}%
+                  {leadStats?.total && leadStats?.total > 0 ? Math.round(((leadStats as any)?.[key] / leadStats.total) * 100) : 0}%
                 </p>
               </div>
             ))}

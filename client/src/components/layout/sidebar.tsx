@@ -14,19 +14,30 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
+import { useClerk, useUser } from "@clerk/clerk-react";
 import { cn } from "@/lib/utils";
 import logoUrl from "@assets/favicon_1757010764824.png";
 
 export default function Sidebar() {
   const [location] = useLocation();
-  const { user } = useAuth();
+  const { user: apiUser } = useAuth();
+  const { user: clerkUser } = useUser();
+  const { signOut } = useClerk();
+  
+  // Use API user data if available, fallback to Clerk user data
+  const user = apiUser || {
+    firstName: clerkUser?.firstName,
+    lastName: clerkUser?.lastName,
+    profileImageUrl: clerkUser?.imageUrl,
+    role: clerkUser?.publicMetadata?.role || 'employee',
+  };
 
-  const { data: leadStats } = useQuery({
+  const { data: leadStats } = useQuery<{ total: number }>({
     queryKey: ["/api/stats/leads"],
   });
 
   const handleLogout = () => {
-    window.location.href = "/api/logout";
+    signOut();
   };
 
   const getInitials = (firstName?: string, lastName?: string) => {
@@ -93,9 +104,9 @@ export default function Sidebar() {
       <div className="p-4 border-b border-border">
         <div className="flex items-center space-x-3">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={user?.profileImageUrl} />
+            <AvatarImage src={user?.profileImageUrl || undefined} />
             <AvatarFallback>
-              {getInitials(user?.firstName, user?.lastName)}
+              {getInitials(user?.firstName || undefined, user?.lastName || undefined)}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">

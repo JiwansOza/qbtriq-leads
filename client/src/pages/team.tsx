@@ -8,12 +8,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, UserPlus, Mail, Phone, Building, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import AddEmployeeModal from "@/components/modals/add-employee-modal";
+import type { UserWithEmployee } from "@shared/schema";
 
 export default function Team() {
   const { user } = useAuth();
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const { data: employees, isLoading } = useQuery({
+  const { data: employees, isLoading } = useQuery<UserWithEmployee[]>({
     queryKey: ["/api/employees"],
   });
 

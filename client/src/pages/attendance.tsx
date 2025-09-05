@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useAuthenticatedQuery, useAuthenticatedMutation } from "@/hooks/useAuthenticatedQuery";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,85 +10,92 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { Attendance } from "@shared/schema";
 
 export default function Attendance() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [location, setLocation] = useState<{lat: number, lng: number, address?: string} | null>(null);
 
-  const { data: todayAttendance } = useQuery({
-    queryKey: ["/api/attendance/today"],
-  });
+  const { data: todayAttendance } = useAuthenticatedQuery<Attendance>(
+    ["/api/attendance/today"],
+    "/api/attendance/today"
+  );
 
-  const { data: attendanceRecords, isLoading } = useQuery({
-    queryKey: ["/api/attendance"],
-  });
+  const { data: attendanceRecords, isLoading } = useAuthenticatedQuery<Attendance[]>(
+    ["/api/attendance"],
+    "/api/attendance"
+  );
 
-  const punchInMutation = useMutation({
-    mutationFn: async (location?: {lat: number, lng: number, address?: string}) => {
-      await apiRequest("POST", "/api/attendance/punch-in", { location });
+  const punchInMutation = useAuthenticatedMutation(
+    async (location: {lat: number, lng: number, address?: string}, token: string) => {
+      await apiRequest("POST", "/api/attendance/punch-in", { location }, token);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/attendance/today"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats/attendance"] });
-      toast({
-        title: "Success",
-        description: "Punched in successfully",
-      });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/attendance/today"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/stats/attendance"] });
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: "Success",
+          description: "Punched in successfully",
+        });
+      },
+      onError: (error) => {
+        if (isUnauthorizedError(error)) {
+          toast({
+            title: "Unauthorized",
+            description: "You are logged out. Logging in again...",
+            variant: "destructive",
+          });
+          setTimeout(() => {
+            window.location.href = "/api/login";
+          }, 500);
+          return;
+        }
+        toast({
+          title: "Error",
+          description: "Failed to punch in",
           variant: "destructive",
         });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to punch in",
-        variant: "destructive",
-      });
-    },
-  });
+      },
+    }
+  );
 
-  const punchOutMutation = useMutation({
-    mutationFn: async (location?: {lat: number, lng: number, address?: string}) => {
-      await apiRequest("POST", "/api/attendance/punch-out", { location });
+  const punchOutMutation = useAuthenticatedMutation(
+    async (location: {lat: number, lng: number, address?: string}, token: string) => {
+      await apiRequest("POST", "/api/attendance/punch-out", { location }, token);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/attendance/today"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats/attendance"] });
-      toast({
-        title: "Success",
-        description: "Punched out successfully",
-      });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/attendance/today"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/stats/attendance"] });
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: "Success",
+          description: "Punched out successfully",
+        });
+      },
+      onError: (error) => {
+        if (isUnauthorizedError(error)) {
+          toast({
+            title: "Unauthorized",
+            description: "You are logged out. Logging in again...",
+            variant: "destructive",
+          });
+          setTimeout(() => {
+            window.location.href = "/api/login";
+          }, 500);
+          return;
+        }
+        toast({
+          title: "Error",
+          description: "Failed to punch out",
           variant: "destructive",
         });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to punch out",
-        variant: "destructive",
-      });
-    },
-  });
+      },
+    }
+  );
 
   const getCurrentLocation = () => {
     return new Promise<{lat: number, lng: number}>((resolve, reject) => {
@@ -118,7 +125,7 @@ export default function Attendance() {
       punchInMutation.mutate(location);
     } catch (error) {
       // Punch in without location if geolocation fails
-      punchInMutation.mutate();
+      punchInMutation.mutate({ lat: 0, lng: 0 });
     }
   };
 
@@ -129,7 +136,7 @@ export default function Attendance() {
       punchOutMutation.mutate(location);
     } catch (error) {
       // Punch out without location if geolocation fails
-      punchOutMutation.mutate();
+      punchOutMutation.mutate({ lat: 0, lng: 0 });
     }
   };
 
@@ -137,8 +144,8 @@ export default function Attendance() {
     return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
   };
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString([], { 
+  const formatTime = (date: string | Date) => {
+    return new Date(date).toLocaleTimeString([], { 
       hour: '2-digit', 
       minute: '2-digit' 
     });
