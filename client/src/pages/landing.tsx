@@ -5,6 +5,7 @@ import { SignIn } from "@clerk/clerk-react";
 import { Mail, ShieldCheck, Star } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
+import qbtriqLogo from "@assets/favicon_1757010764824.png";
 
 export default function Landing() {
   const [showLogin, setShowLogin] = useState(false);
@@ -21,9 +22,9 @@ export default function Landing() {
         {/* Removed navbar login button as requested */}
         {/* Hero Section */}
         <div className="text-center mb-24">
-          <div className="flex flex-col md:flex-row items-center justify-center mb-8 gap-4">
-            <img src="/src/assets/qbtriq-logo.png" alt="Qbtriq Logo" width={80} height={80} className="drop-shadow-lg" style={{background: 'transparent'}} />
-            <h1 className="text-5xl font-extrabold text-primary tracking-tight drop-shadow-lg md:ml-6 mt-4 md:mt-0">Qbtriq CRM</h1>
+          <div className="flex flex-col md:flex-row items-center justify-center mb-8 gap-6 w-fit mx-auto">
+            <img src={qbtriqLogo} alt="Qbtriq Logo" width={220} height={220} className="drop-shadow-lg" style={{background: 'transparent'}} />
+            <h1 className="text-5xl font-extrabold text-primary tracking-tight drop-shadow-lg mt-4 md:mt-0">Qbtriq CRM</h1>
           </div>
           <h2 className="text-6xl font-bold text-gray-900 mb-8 leading-tight drop-shadow">
             Accelerate Your Sales Growth
